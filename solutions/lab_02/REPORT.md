@@ -74,6 +74,6 @@ is : False
 **Схема связей до переназначения:**
 ```mermaid
 graph LR
-    first[first] --> obj1(([10, 20, 30]))
-    second[second] --> obj1
+    A[first] --> C["[10, 20, 30]"]
+    B[second] --> C
 ```
