@@ -77,3 +77,55 @@ graph LR
     A[first] --> C["[10, 20, 30]"]
     B[second] --> C
 ```
+**Схема связей после переназначения:**
+```mermaid
+graph LR
+    A[first] --> C["[10, 20, 30]"]
+    B[second] --> D["10, 20, 30, 40]"]
+```
+
+**Практическая задача:**
+```
+# Нежелательное совместное изменение
+config_bad = {
+    "name": "ML Project",
+    "participants": ["Alice", "Bob"],
+    "launch_params": [["--lr", "0.01"], ["--epochs", "10"]]
+}
+config_bad_clone = config_bad
+
+config_bad_clone["participants"].append("Charlie")
+config_bad_clone["launch_params"][0].append("--batch=32")
+
+print("Плохой клон:", config_bad_clone)
+print("Оригинал:   ", config_bad)
+# Видно, что оригинал тоже изменился
+
+# Независимая конфигурация
+import copy
+config_good = copy.deepcopy(config_bad)
+config_good["participants"].append("Dave")
+config_good["launch_params"][0].append("--gpu=1")
+
+assert config_good["participants"] != config_bad["participants"]
+assert config_good["launch_params"] != config_bad["launch_params"]
+assert config_good is not config_bad
+
+print("Независимая:", config_good)
+print("Оригинал:   ", config_bad)
+```
+**Результат:**
+```
+Плохой клон: {'name': 'ML Project', 'participants': ['Alice', 'Bob', 'Charlie'], 'launch_params': [['--lr', '0.01', '--batch=32'], ['--epochs', '10']]}
+Оригинал:    {'name': 'ML Project', 'participants': ['Alice', 'Bob', 'Charlie'], 'launch_params': [['--lr', '0.01', '--batch=32'], ['--epochs', '10']]}
+Независимая: {'name': 'ML Project', 'participants': ['Alice', 'Bob', 'Charlie', 'Dave'], 'launch_params': [['--lr', '0.01', '--batch=32', '--gpu=1'], ['--epochs', '10']]}
+Оригинал:    {'name': 'ML Project', 'participants': ['Alice', 'Bob', 'Charlie'], 'launch_params': [['--lr', '0.01', '--batch=32'], ['--epochs', '10']]}
+```
+**Итог:**
+при простом присваивании общим оказался сам словарь и все вложенные изменяемые объекты (списки участников и параметров). `deepcopy` создал полностью независимую структуру.
+
+#### Вопросы для анализа
+1. Нет, присваивание `second = first` не меняет сам объект, а лишь связывает имя `second` с тем же объектом, на который уже ссылается `first`. Сам объект не создаётся и не модифицируется.
+2. Операция над неизменяемым объектом приводит к связыванию имени с другим объектом, потому что неизменяемый объект нельзя модифицировать. Операция `a += 1` вычисляет новое значение 11,
+создаёт новый объект int и перепривязывает имя a к нему.
+3. С помощью оператора `is` (сравнивает `id()`) или явно через `id(a) == id(b)` можно определить, что два имени обозначают один объект. Оператор `==` сравнивает значения, а не идентичность.
